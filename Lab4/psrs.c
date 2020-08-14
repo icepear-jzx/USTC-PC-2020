@@ -7,31 +7,8 @@
 int A[10000000];
 
 
-void merge(int *A, int l, int m, int r){
-    int i, j, k, n1 = m - l + 1, n2 = r - m;
-    int *L = (int *)malloc((n1 + 1) * sizeof(int));
-    int *R = (int *)malloc((n2 + 1) * sizeof(int));
-    for(i = 0; i < n1; i++) L[i] = A[l + i];
-    for(j = 0; j < n2; j++) R[j] = A[m + 1 + j];
-    L[i] = R[j] = INF;
-    i = j = 0;
-    for(k = l; k <= r; k++) {
-        if(L[i] <= R[j]) 
-            A[k] = L[i++]; 
-        else 
-            A[k] = R[j++];
-    }
-    free(L); free(R);
-} 
-
-
-void merge_sort(int *A, int l, int r){
-    if(l < r){
-        int m = (l + r) / 2;
-        merge_sort(A, l, m);
-        merge_sort(A, m + 1, r);
-        merge(A, l, m, r);
-    }
+int cmpfunc(const void *a, const void *b){
+    return *(int*)a - *(int*)b;
 } 
 
 
@@ -55,7 +32,7 @@ void psrs(int n, int world_rank, int world_size){
 
     // MPI_Barrier(MPI_COMM_WORLD);
 
-    merge_sort(A, world_rank * per, (world_rank + 1) * per - 1); 
+    qsort(&A[world_rank * per], per, sizeof(int), cmpfunc); 
 
     for(int k = 0; k < world_size; k++) 
         samples[k] = A[world_rank * per + k * per / world_size];
@@ -63,7 +40,7 @@ void psrs(int n, int world_rank, int world_size){
     MPI_Gather(samples, world_size, MPI_INT, global_samples, world_size, MPI_INT, 0, MPI_COMM_WORLD);
 
     if(world_rank == 0){
-        merge_sort(global_samples, 0, world_size * world_size - 1);
+        qsort(global_samples, world_size * world_size, sizeof(int), cmpfunc);
         for(int k = 0; k < world_size - 1; k++)
             pivots[k] = global_samples[(k + 1) * world_size];
         pivots[world_size - 1] = INF;
@@ -98,7 +75,7 @@ void psrs(int n, int world_rank, int world_size){
     MPI_Alltoallv(&(A[world_rank * per]), sizes, offsets, MPI_INT, newdatas, newsizes, newoffsets, MPI_INT, MPI_COMM_WORLD);
     // MPI_Barrier(MPI_COMM_WORLD);
 
-    merge_sort(newdatas, 0, newdatassize - 1);
+    qsort(newdatas, newdatassize, sizeof(int), cmpfunc);
     // MPI_Barrier(MPI_COMM_WORLD);
 
     if(world_rank == 0)
@@ -158,10 +135,10 @@ int main(int argc, char *argv[]){
 
     if(world_rank == 0) {
         t2 = MPI_Wtime();
-        for(int i = 0; i < array_len; i++)
-            printf("%d ", A[i]);
-        printf("\n");
-        printf("time: %lfs\n", t2 - t1);
+        // for(int i = 0; i < array_len; i++)
+        //     printf("%d ", A[i]);
+        // printf("\n");
+        printf("Time: %lf\n", t2 - t1);
     }
 
     MPI_Finalize();

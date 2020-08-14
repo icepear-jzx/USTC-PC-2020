@@ -1,7 +1,6 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 
 int car_v[1000000];
 int car_pos[1000000];
@@ -9,7 +8,7 @@ int car_v_recv[1000000];
 int car_pos_recv[1000000];
 
 int main(int argc, char *argv[]) {
-    clock_t start = clock();
+    double t1, t2;
     int car_num = atoi(argv[1]);
     int period = atoi(argv[2]);
     int v_max = atoi(argv[3]);
@@ -39,6 +38,10 @@ int main(int argc, char *argv[]) {
     for(int car_i = 0; car_i < valid_car_num; car_i++) {
         car_v[car_i] = 0;
         car_pos[car_i] = base_car_num * world_rank + car_i;
+    }
+
+    if(world_rank == 0) {
+        t1 = MPI_Wtime();
     }
 
     // period 0
@@ -111,7 +114,8 @@ int main(int argc, char *argv[]) {
                 // }
             }
         }
-        printf("Time: %f\n", (clock() - start) / (float)CLOCKS_PER_SEC);
+        t2 = MPI_Wtime();
+        printf("Time: %lf\n", t2 - t1);
     } else {
         MPI_Send(car_v, valid_car_num, MPI_INT, 0, tag_v, MPI_COMM_WORLD);
         MPI_Send(car_pos, valid_car_num, MPI_INT, 0, tag_pos, MPI_COMM_WORLD);

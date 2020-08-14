@@ -1,7 +1,6 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <math.h>
 
 double soft2 = 1e-18;
@@ -61,7 +60,7 @@ void print_status(int world_rank, int body_rank_start, int body_rank_end) {
 }
 
 int main(int argc, char *argv[]) {
-    clock_t start = clock();
+    double t1, t2;
     int body_num = atoi(argv[1]);
     int periods = atoi(argv[2]);
     int sqrt_body_num = ceil(sqrt(body_num));
@@ -95,6 +94,10 @@ int main(int argc, char *argv[]) {
         local_fy[i] = 0;
     }
 
+    if(world_rank == 0) {
+        t1 = MPI_Wtime();
+    }
+
     for (int period = 0; period < periods; period++) {
 
         MPI_Allgather(&local_x[body_rank_start], base_body_num, MPI_DOUBLE,
@@ -120,8 +123,10 @@ int main(int argc, char *argv[]) {
         compute_positions(body_rank_start, body_rank_end);
     }
 
-    if (world_rank == 0)
-        printf("Time: %f\n", (clock() - start) / (float)CLOCKS_PER_SEC);
+    if (world_rank == 0) {
+        t2 = MPI_Wtime();
+        printf("Time: %lf\n", t2 - t1);
+    }
 
     // print_status(world_rank, body_rank_start, body_rank_end);
     

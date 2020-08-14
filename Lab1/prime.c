@@ -1,7 +1,6 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <math.h>
 
 int is_prime(int num) {
@@ -12,7 +11,7 @@ int is_prime(int num) {
 }
 
 int main(int argc, char *argv[]) {
-    clock_t start = clock();
+    double t1, t2;
     int n = atoi(argv[1]);
 
     MPI_Init(NULL, NULL);
@@ -22,6 +21,10 @@ int main(int argc, char *argv[]) {
 
     int world_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+
+    if(world_rank == 0) {
+        t1 = MPI_Wtime();
+    }
 
     int local_cnt = 0;
     for(int i = 2 + world_rank; i <= n; i += world_size) {
@@ -33,8 +36,9 @@ int main(int argc, char *argv[]) {
             MPI_COMM_WORLD);
 
     if(world_rank == 0) {
+        t2 = MPI_Wtime();
         printf("Prime number: %d\n", global_cnt);
-        printf("Time: %f\n", (clock() - start) / (float)CLOCKS_PER_SEC);
+        printf("Time: %lf\n", t2 - t1);
     }
 
     MPI_Finalize();

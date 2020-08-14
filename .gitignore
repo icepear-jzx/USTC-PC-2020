@@ -4,3 +4,5 @@ prime
 monte_carlo
 nbody
 psrs
+pi-openmp
+prime-openmp
